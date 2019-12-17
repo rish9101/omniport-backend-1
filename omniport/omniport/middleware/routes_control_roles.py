@@ -4,6 +4,7 @@ from django.conf import settings
 from django.http import Http404
 
 from base_auth.managers.get_user import get_user
+from discovery.available import from_acceptable_person
 
 class RoutesControlRoles:
     """
@@ -27,21 +28,25 @@ class RoutesControlRoles:
             :param request: the request being processed
             :return: the processed response
             """
-            
-            DISCOVERY = settings.DISCOVERY
+            if request.method == "GET":
+                DISCOVERY = settings.DISCOVERY
 
-            all_apps = DISCOVERY.apps
+                all_apps = DISCOVERY.apps
 
-            for app, app_configuration in all_apps:
-                base_url = app_configuration.base_urls.http.strip('/')
-                if app_configuration.guest_allowed:
-                    excluded_paths = app_configuration.excluded_paths
-                    for excluded_path in excluded_paths:
-                        if re.match(f'^/{base_url}/{excluded_path}/', request.path):
+                for app, app_configuration in all_apps:
+                    base_url = app_configuration.base_urls.http.strip('/')
+                    if (app_configuration.guest_allowed or 
+                    from_acceptable_person(request.roles, app_configuration.acceptables.roles)):
+                        excluded_paths = app_configuration.excluded_paths
+                        for excluded_path in excluded_paths:
+                            if (re.match(f'^/api/{base_url}/{excluded_path}/', request.path) or
+                            re.match(f'^/{base_url}/{excluded_path}/', request.path)):
+                                raise Http404
+                    else:
+                        if re.match(f'^/{base_url}/', request.path):
                             raise Http404
-                else:
-                    if re.match(f'^/{base_url}/', request.path):
-                        raise Http404
+            else:
+                raise Http404
         response = self.get_response(request)
 
         return response

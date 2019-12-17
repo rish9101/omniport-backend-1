@@ -18,9 +18,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'omniport.middleware.drf_auth.DrfAuth',
-
     'omniport.middleware.ip_address_rings.IpAddressRings',
     'omniport.middleware.routes_control.RoutesControl',
     'omniport.middleware.person_roles.PersonRoles',
     'omniport.middleware.last_seen.LastSeen',
+    'omniport.middleware.routes_control_roles.RoutesControlRoles',
 ]
